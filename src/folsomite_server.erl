@@ -25,11 +25,11 @@
 -define(APP, folsomite).
 -define(TIMER_MSG, '#flush').
 
--record(state, {flush_interval :: integer(),
-                tags           :: list(atom()),
-                graphite_prefix:: string(),
-                zeta_prefix    :: string(),
-                timer_ref      :: reference()}).
+-record(state, {flush_interval  :: integer(),
+                tags            :: list(atom()),
+                graphite_prefix :: string(),
+                zeta_prefix     :: string(),
+                timer_ref       :: reference()}).
 
 
 %% management api
