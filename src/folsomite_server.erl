@@ -182,11 +182,23 @@ expand_prefix([], Acc) ->
     lists:reverse(Acc);
 expand_prefix([node|Rest], Acc) ->
     NodeList = atom_to_list(node()),
-    Opts = [global, {return, list}],
-    NodeKey = re:replace(NodeList, "[\@\.]", "_", Opts),
+    NodeKey = replace_prefix_chars(NodeList),
     expand_prefix(Rest, [NodeKey|Acc]);
+expand_prefix([sname|Rest], Acc) ->
+    NodeList = atom_to_list(node()),
+    ShortName = string:sub_word(NodeList, 1, $@),
+    ShortNameKey = replace_prefix_chars(ShortName),
+    expand_prefix(Rest, [ShortNameKey|Acc]);
+expand_prefix([host|Rest], Acc) ->
+    {ok, Hostname} = inet:gethostname(),
+    HostKey = replace_prefix_chars(Hostname),
+    expand_prefix(Rest, [HostKey|Acc]);
 expand_prefix([V|Rest], Acc) ->
     expand_prefix(Rest, [V|Acc]).
+
+replace_prefix_chars(Str) ->
+    Opts = [global, {return, list}],
+    re:replace(Str, "[\@\.]", "_", Opts).
 
 
 stringify(X) when is_list(X) -> X;
