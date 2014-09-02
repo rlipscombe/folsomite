@@ -134,7 +134,10 @@ expand(X, NamePrefix) ->
 
 send_stats(State) ->
     Metrics = get_stats(),
-    Timestamp = num2str(unixtime()),
+    send_stats_zeta(Metrics, State),
+    send_stats_graphite(Metrics, State).
+
+send_stats_zeta(Metrics, State) ->
     Prefix = State#state.node_prefix,
     Tags = State#state.tags,
     Heartbeat =
@@ -143,7 +146,10 @@ send_stats(State) ->
         [Heartbeat|
          [folsomite_zeta:host_event(Prefix, K, V, [{tags, [transient|Tags]}]) ||
           {K, V} <- Metrics]],
-    zeta:sv_batch(Events),
+    zeta:sv_batch(Events).
+
+send_stats_graphite(Metrics, State) ->
+    Timestamp = num2str(unixtime()),
     Message = [format1(State#state.node_key, M, Timestamp) || M <- Metrics],
     case folsomite_graphite_client_sup:get_client() of
         {ok, Socket} -> folsomite_graphite_client:send(Socket, Message);
