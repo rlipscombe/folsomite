@@ -28,7 +28,7 @@
 -record(state, {flush_interval :: integer(),
                 tags           :: list(atom()),
                 node_key       :: string(),
-                node_prefix    :: string(),
+                zeta_prefix    :: string(),
                 timer_ref      :: reference()}).
 
 
@@ -48,7 +48,7 @@ init(no_arg) ->
     State = #state{flush_interval = FlushInterval,
                    tags = Tags,
                    node_key = node_key(),
-                   node_prefix = node_prefix(),
+                   zeta_prefix = zeta_prefix(),
                    timer_ref = Ref},
     {ok, State}.
 
@@ -138,7 +138,7 @@ send_stats(State) ->
     send_stats_graphite(Metrics, State).
 
 send_stats_zeta(Metrics, State) ->
-    Prefix = State#state.node_prefix,
+    Prefix = State#state.zeta_prefix,
     Tags = State#state.tags,
     Heartbeat =
         folsomite_zeta:host_event(Prefix, "heartbeat",1, [{tags, Tags}]),
@@ -163,7 +163,7 @@ num2str(NN) -> lists:flatten(io_lib:format("~w",[NN])).
 unixtime()  -> {Meg, S, _} = os:timestamp(), Meg*1000000 + S.
 
 
-node_prefix() ->
+zeta_prefix() ->
     NodeList = atom_to_list(node()),
     [A, _] = string:tokens(NodeList, "@"),
     A.
@@ -200,7 +200,7 @@ unexpected(Type, Message) ->
 
 do_finalize(#state{timer_ref = Ref} = State) ->
     erlang:cancel_timer(Ref),
-    Prefix = State#state.node_prefix,
+    Prefix = State#state.zeta_prefix,
     Terminate = folsomite_zeta:host_event(Prefix, "heartbeat",
                                           1, [{tags, [terminate]}]),
     zeta:sv_batch([Terminate]).
