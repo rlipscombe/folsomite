@@ -156,8 +156,8 @@ send_stats_graphite(Metrics, State) ->
         {error, _} = Error -> Error
     end.
 
-format1(Base, {K, V}, Timestamp) ->
-    ["folsomite.", Base, ".", space2dot(K), " ", stringify(V), " ", Timestamp, "\n"].
+format1(Prefix, {K, V}, Timestamp) ->
+    [Prefix, ".", space2dot(K), " ", stringify(V), " ", Timestamp, "\n"].
 
 num2str(NN) -> lists:flatten(io_lib:format("~w",[NN])).
 unixtime()  -> {Meg, S, _} = os:timestamp(), Meg*1000000 + S.
@@ -168,10 +168,13 @@ zeta_prefix() ->
     [A, _] = string:tokens(NodeList, "@"),
     A.
 
+%% @doc Generate a prefix for graphite, based on the current node name. Turns
+%% 'foo@bar.baz.com' into "foo_bar_baz_com".
 graphite_prefix() ->
     NodeList = atom_to_list(node()),
     Opts = [global, {return, list}],
-    re:replace(NodeList, "[\@\.]", "_", Opts).
+    NodeKey = re:replace(NodeList, "[\@\.]", "_", Opts),
+    "folsomite." ++ NodeKey.
 
 
 stringify(X) when is_list(X) -> X;
