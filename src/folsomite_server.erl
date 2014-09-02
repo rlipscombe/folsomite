@@ -27,7 +27,7 @@
 
 -record(state, {flush_interval :: integer(),
                 tags           :: list(atom()),
-                node_key       :: string(),
+                graphite_prefix:: string(),
                 zeta_prefix    :: string(),
                 timer_ref      :: reference()}).
 
@@ -47,7 +47,7 @@ init(no_arg) ->
     Ref = erlang:start_timer(FlushInterval, self(), ?TIMER_MSG),
     State = #state{flush_interval = FlushInterval,
                    tags = Tags,
-                   node_key = node_key(),
+                   graphite_prefix = graphite_prefix(),
                    zeta_prefix = zeta_prefix(),
                    timer_ref = Ref},
     {ok, State}.
@@ -150,7 +150,7 @@ send_stats_zeta(Metrics, State) ->
 
 send_stats_graphite(Metrics, State) ->
     Timestamp = num2str(unixtime()),
-    Message = [format1(State#state.node_key, M, Timestamp) || M <- Metrics],
+    Message = [format1(State#state.graphite_prefix, M, Timestamp) || M <- Metrics],
     case folsomite_graphite_client_sup:get_client() of
         {ok, Socket} -> folsomite_graphite_client:send(Socket, Message);
         {error, _} = Error -> Error
@@ -168,7 +168,7 @@ zeta_prefix() ->
     [A, _] = string:tokens(NodeList, "@"),
     A.
 
-node_key() ->
+graphite_prefix() ->
     NodeList = atom_to_list(node()),
     Opts = [global, {return, list}],
     re:replace(NodeList, "[\@\.]", "_", Opts).
