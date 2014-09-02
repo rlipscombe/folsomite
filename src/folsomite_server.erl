@@ -171,10 +171,22 @@ zeta_prefix() ->
 %% @doc Generate a prefix for graphite, based on the current node name. Turns
 %% 'foo@bar.baz.com' into "foo_bar_baz_com".
 graphite_prefix() ->
+    expand_prefix(application:get_env(?APP, graphite_prefix, ["folsomite.", node])).
+
+expand_prefix(Terms) ->
+    expand_prefix(Terms, []).
+
+expand_prefix([], Acc) ->
+    % We don't need to turn it into a string, since the graphite client handles
+    % iolists.
+    lists:reverse(Acc);
+expand_prefix([node|Rest], Acc) ->
     NodeList = atom_to_list(node()),
     Opts = [global, {return, list}],
     NodeKey = re:replace(NodeList, "[\@\.]", "_", Opts),
-    "folsomite." ++ NodeKey.
+    expand_prefix(Rest, [NodeKey|Acc]);
+expand_prefix([V|Rest], Acc) ->
+    expand_prefix(Rest, [V|Acc]).
 
 
 stringify(X) when is_list(X) -> X;
